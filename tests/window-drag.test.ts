@@ -48,9 +48,33 @@ test('repeated drags preserve both dimensions and skip repeated coordinates', as
     drag.start(); point({ x: 1600, y: 950 }); await wait(100);
     assert.equal(moves.length, 1); drag.stop(true); assert.equal(moves.length, 1);
     for (let index = 0; index < 100; index++) {
-      drag.start(); point({ x: 1601 + index, y: 951 + index }); drag.stop(true);
+      drag.start(); point({ x: 1600 + (index + 1) * 8, y: 950 + (index + 1) * 8 }); drag.stop(true);
     }
     assert.equal(bounds().width, 1280); assert.equal(bounds().height, 720);
     assert.ok(moves.every(move => move.width === 1280 && move.height === 720));
+    assert.equal(moves.length, 101);
+  } finally { drag.stop(); }
+});
+
+test('rapid releases ignore fractional-DPI origin noise without moving or resizing', () => {
+  const { drag, moves, bounds } = fixture();
+  try {
+    for (let index = 0; index < 1000; index++) {
+      drag.start({ x: 1499.25 + (index % 3) / 2, y: 899.25 + (index % 3) / 2 });
+      drag.stop(true);
+    }
+    assert.equal(moves.length, 0);
+    assert.deepEqual(bounds(), { x: 640, y: 336, width: 1280, height: 720 });
+  } finally { drag.stop(); }
+});
+
+test('after a real drag starts, small movements remain responsive', async () => {
+  const { drag, point, moves } = fixture();
+  try {
+    drag.start(); point({ x: 1510, y: 900 }); await wait(50);
+    point({ x: 1511, y: 900 }); await wait(50); drag.stop(true);
+    assert.equal(moves.at(-1)?.x, 651);
+    assert.equal(moves.at(-1)?.width, 1280);
+    assert.equal(moves.length, 2);
   } finally { drag.stop(); }
 });

@@ -8,6 +8,7 @@ import { SettingsDialog } from './SettingsDialog';
 import { InstanceDialog } from './InstanceDialog';
 import { InstanceSidebar } from './InstanceSidebar';
 import { RemoveInstanceDialog } from './RemoveInstanceDialog';
+import { WindowDragGesture } from './window-drag-gesture';
 
 const asset = (name: string) => `./assets/${name}.svg`;
 export function App() {
@@ -23,19 +24,26 @@ export function App() {
   const [editingId, setEditingId] = useState<string>();
   const openEdit = (id: string) => { setEditingId(id); setModal('edit'); };
   const openRemove = (id: string) => { setEditingId(id); setModal('remove'); };
-  const dragPointer = useRef<number | undefined>(undefined);
-  const stopWindowDrag = () => {
-    if (dragPointer.current === undefined) return;
-    dragPointer.current = undefined;
-    void api?.window('drag-stop').catch(() => {});
-  };
+  const dragGesture = useRef<WindowDragGesture | undefined>(undefined);
+  if (!dragGesture.current && api) dragGesture.current = new WindowDragGesture((...args) => api.window(...args));
+  const stopWindowDrag = (event?: React.PointerEvent<HTMLElement>) => dragGesture.current?.release(event?.pointerId);
   const startWindowDrag = (event: React.PointerEvent<HTMLElement>) => {
     const target = event.target as Element;
     if (event.button !== 0 || !event.isPrimary || target.closest('button,input,select,textarea,a,summary,[role="button"],.modal-body,.device-code,.path-text,.root-row,.account-profile,.instance-list.fade-top,.instance-list.fade-bottom')) return;
-    dragPointer.current = event.pointerId;
+    dragGesture.current?.press(event.pointerId, event.clientX, event.clientY);
     event.currentTarget.setPointerCapture(event.pointerId);
-    void api?.window('drag-start', { x: event.clientX, y: event.clientY }).catch(stopWindowDrag);
   };
+  const moveWindowDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (!(event.buttons & 1)) { stopWindowDrag(event); return; }
+    dragGesture.current?.move(event.pointerId, event.clientX, event.clientY);
+  };
+  useEffect(() => {
+    const stop = () => dragGesture.current?.release();
+    const preventZoom = (event: WheelEvent) => { if (event.ctrlKey || event.metaKey) event.preventDefault(); };
+    window.addEventListener('blur', stop);
+    document.addEventListener('wheel', preventZoom, { passive: false });
+    return () => { stop(); window.removeEventListener('blur', stop); document.removeEventListener('wheel', preventZoom); };
+  }, []);
   const selected = data?.instances.find(i => i.id === data.selectedId) || data?.instances[0];
   const modalInstance = editingId ? data?.instances.find(item => item.id === editingId) : selected;
   const version = data?.versions.find(v => v.key === selected?.versionKey);
@@ -51,7 +59,7 @@ export function App() {
   if (!api) return <main className="browser-message"><h1>Autumn Launcher</h1><p>{t("请通过桌面程序打开启动器。")}</p><p>{t("在项目目录执行 npm run build，再执行 npm start。")}</p></main>;
   if (!data) return <main className="boot"><span className="spinner" />{t("正在读取本地启动器配置…")}</main>;
   const close = () => setModal(undefined);
-  return <LanguageProvider language={language}><main className="launcher-shell" onPointerDown={startWindowDrag} onPointerUp={stopWindowDrag} onPointerCancel={stopWindowDrag} onLostPointerCapture={stopWindowDrag}>
+  return <LanguageProvider language={language}><main className="launcher-shell" onPointerDown={startWindowDrag} onPointerMove={moveWindowDrag} onPointerUp={stopWindowDrag} onPointerCancel={stopWindowDrag} onLostPointerCapture={stopWindowDrag}>
     <div className="scene" aria-hidden="true" /><div className="shade" aria-hidden="true" />
     <div className="window-drag-surface" aria-hidden="true" />
     

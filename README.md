@@ -10,11 +10,11 @@ All third-party images and trademarks belong to their respective rights holders.
 
 ## Project status
 
-Version: **0.1.6**, under development.
+Version: **0.1.7**, under development.
 
 Microsoft browser authorization and Xbox authentication reach Minecraft Services, which currently returns HTTP 403 / Invalid app registration. Minecraft API application access approval is pending. Complete account sign-in, token refresh, player skin retrieval and real game launches have not yet passed end-to-end validation.
 
-The repository contains the actual implementation, build configuration, interface assets and 43 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
+The repository contains the actual implementation, build configuration, interface assets and 49 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
 
 - [Authentication purpose, service endpoints and local data handling](AUTHENTICATION.md)
 - [Validation record and known limitations](VALIDATION.md)
@@ -22,7 +22,8 @@ The repository contains the actual implementation, build configuration, interfac
 ## Features
 
 - Scan standard local Minecraft directories and parse installed Vanilla, Fabric, Forge and NeoForge versions using Java 17 or newer, including modern snapshots with standard metadata.
-- Settings dropdown arrows use a consistent inset from the field edge.
+- Window resizing keeps a 16:9 aspect ratio. Plain clicks and small pointer jitter do not initiate window dragging. Browser zoom is disabled.
+- Settings dropdown arrows use a consistent inset from the field edge. Dialog content reserves space for the top focus outline.
 - Choose Simplified Chinese or English in settings. The first run defaults to Chinese for Chinese system languages and English otherwise; saved choices take precedence.
 - Create isolated game directories with per-instance names, icons, Java paths and memory settings.
 - Right-click an instance for Launch, Edit and Remove actions. Hold its icon for 350 ms, then drag to reorder; the order is saved automatically.
@@ -52,7 +53,7 @@ Build a Windows x64 portable executable:
 
     npm run package
 
-The portable executable is generated under release/Autumn-Launcher-0.1.6-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository. The application/window icon is generated from the bundled grass-block SVG; run npm run generate:icon after changing that SVG.
+The portable executable is generated under release/Autumn-Launcher-0.1.7-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository. The application/window icon is generated from the bundled grass-block SVG; run npm run generate:icon after changing that SVG.
 
 The initial dependency installation may download Electron's official runtime. Configure the Electron downloader's supported proxy environment variables if your network requires a proxy.
 

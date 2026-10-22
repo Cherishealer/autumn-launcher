@@ -1,11 +1,11 @@
 # Validation record
 
-Last updated: 2026-10-22. Current version: **0.1.6**.
+Last updated: 2026-10-22. Current version: **0.1.7**.
 
 ## Passed checks
 
 - Frontend and Electron TypeScript checks and Vite production build.
-- 43 automated tests covering Microsoft OAuth response validation, trusted verification URLs, legacy verification_url compatibility, device-code callbacks, cancellation, concurrent attempts, actual MSAL request normalization, actual XMCL exchange handling, stage-specific errors and sensitive-response redaction.
+- 49 automated tests covering Microsoft OAuth response validation, trusted verification URLs, legacy verification_url compatibility, device-code callbacks, cancellation, concurrent attempts, actual MSAL request normalization, actual XMCL exchange handling, stage-specific errors and sensitive-response redaction.
 - Launch-state tests for latest startup output, stable running/failed status, rejection of stale events and normal/abnormal exits.
 - JVM argument, path-boundary, IPC input and detached-console EPIPE regressions.
 - Windows Electron backend checks with isolated fixtures: configuration persistence, encrypted credential round trip, absence of plaintext test credentials and compatibility with older encrypted files.
@@ -55,11 +55,11 @@ Missing client JARs, dependencies and resources can be repaired from existing ve
 
 ## Local portable artifact
 
-The generated 0.1.6 portable executable has SHA-256:
+The generated 0.1.7 portable executable has SHA-256:
 
-    9d8f8defa690fbb6cb4b9a419ae26d6057fdaf6c4d07414a17ed64162a375208
+    3734071217af6ad338bed0e783297e84baa047813e0ff103f468916d6a225f86
 
-The packaged app.asar was inspected without starting the app: its package version is 0.1.6, its CSS matches the latest production build, and it includes the dropdown SVG and instance-ordering IPC. The final executable was not opened automatically; final manual testing is left to the maintainer. Generated binaries are excluded from this source repository. This hash records the locally produced artifact and does not imply that a GitHub Release has been published.
+The packaged app.asar was inspected without starting the app: its package version is 0.1.7, its renderer and CSS match the latest production build, and its main process contains the aspect-ratio policy and drag activation threshold. The final executable was not opened automatically; final manual testing is left to the maintainer. Generated binaries are excluded from this source repository. This hash records the locally produced artifact and does not imply that a GitHub Release has been published.
 
 ## 0.1.5: language, interaction and local version discovery
 
@@ -86,3 +86,13 @@ The isolated Windows UI check confirmed Chinese/English settings, persisted Engl
 - A themed instance context menu groups Launch and Edit above a divider, with Remove below. Actions target the right-clicked instance, including an instance that is not selected. Running/launching instances disable these actions. Removal continues to require confirmation and preserves game data.
 - Holding an icon for 350 ms enables drag ordering, including scrolling near the list edges. Releasing inside the list saves a validated permutation of existing IDs. Escape, loss of focus, pointer cancellation or dropping outside cancels the gesture. Sorting suppresses the resulting click and preserves the selected instance.
 - All 43 Node tests passed. An isolated renderer component fixture checked menu targeting, grouping, edge placement, dismissal, modal selection rules, hover shapes, long-press sorting, click suppression, cancellation and order persistence through the actual Store. Its pointer events were synthetic and its native pointer-capture call was stubbed; its launch route was simulated, not a real game launch. The visible Windows fixture separately confirmed the context menu and editing a non-selected instance.
+
+
+## 0.1.7: click stability, proportional resizing and modal focus clipping
+
+- A pointer press no longer starts the native window drag loop. Renderer movement must first exceed 6 CSS pixels; the backend independently ignores less than 6 DIP of initial movement to absorb coordinate-conversion noise. After activation, small deliberate movement remains responsive. Quick release still flushes an actual drag, while plain clicks never send a drag request.
+- Added regressions for 1000 repeated clicks, fractional-coordinate jitter, stale asynchronous failures and pointer cancellation. All 49 automated tests passed. These are code-level checks; the reported subtle desktop animation requires final manual verification by the maintainer.
+- Native manual window resizing is locked to 16:9 with Electron setAspectRatio. Initial dimensions remain 1280 by 720 and minimum dimensions are 1120 by 630, both matching the fixed ratio. Maximization and fullscreen entry are disabled so they cannot introduce a different aspect ratio. Native edge/corner resizing at the actual Windows display scale is pending manual verification.
+- Removed the native application menu and blocked browser keyboard, control-wheel and visual/pinch zoom so content zoom cannot be confused with proportional window resizing.
+- Modal bodies now have 8 px of top padding, plus scroll padding and field scroll margins. The first field and its outer focus outline no longer start directly on the scroll container's clipping boundary. Final visual verification is left to the maintainer.
+- No Computer Use or desktop interaction automation was used for this update. The newly packaged executable is provided for manual testing and is not opened automatically.

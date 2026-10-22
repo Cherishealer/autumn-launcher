@@ -159,7 +159,13 @@ else {
     auth = new Auth(store, network, (value?: DeviceCode) => { if (!win?.isDestroyed()) win.webContents.send('launcher:deviceCode', value); });
     await auth.init();
     launcher = new Launcher(store, auth, network, notify);
-    win = new BrowserWindow({ width: 1280, height: 720, minWidth: 960, minHeight: 620, frame: false, transparent: true, backgroundColor: '#00000000', show: false, title: 'Autumn Launcher', icon: path.join(__dirname, development ? '../../public/assets/app-icon.png' : '../../dist/assets/app-icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+    win = new BrowserWindow({ width: 1280, height: 720, minWidth: 1120, minHeight: 630, maximizable: false, fullscreenable: false, frame: false, transparent: true, backgroundColor: '#00000000', show: false, title: 'Autumn Launcher', icon: path.join(__dirname, development ? '../../public/assets/app-icon.png' : '../../dist/assets/app-icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+    win.setAspectRatio(16 / 9);
+    win.setMenu(null);
+    win.webContents.setZoomFactor(1);
+    win.webContents.on('before-input-event', (event, input) => {
+      if ((input.control || input.meta) && ['+', '=', '-', '_', '0', 'Add', 'Subtract'].includes(input.key)) event.preventDefault();
+    });
     windowDrag = new WindowDrag(win, () => screen.getCursorScreenPoint());
     win.on('blur', () => windowDrag.stop());
     win.on('closed', () => windowDrag.stop());
@@ -175,6 +181,7 @@ else {
     });
     registerIpc();
     if (bootUrl) await win.loadURL(bootUrl); else await win.loadFile(path.join(__dirname, '../../dist/index.html'));
+    await win.webContents.setVisualZoomLevelLimits(1, 1);
     await scan(); await store.save();
   }).catch(error => { dialog.showErrorBox(t('启动器初始化失败'), error.message); app.quit(); });
   app.on('window-all-closed', () => app.quit());
