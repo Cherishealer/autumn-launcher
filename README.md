@@ -1,98 +1,105 @@
 # Autumn Launcher
 
-Windows x64 极简 Minecraft Java Edition 启动器，基于 Electron、React、TypeScript 和 XMCL。界面素材来自用户提供的 Figma 文件。
+A minimal Windows x64 desktop launcher for locally installed Minecraft: Java Edition instances, built with Electron, React, TypeScript, MSAL Node and XMCL.
 
-## Project overview / application review
+## Project status
 
-Autumn Launcher is an independent Windows x64 desktop launcher for locally installed Minecraft: Java Edition instances. It uses Electron, React, TypeScript, MSAL Node and XMCL. The project is currently in development.
+Version: **0.1.4**, under development.
 
-Microsoft sign-in starts from the avatar button and opens Microsoft’s official device-code sign-in page in the system browser. The intended authenticated flow is Microsoft OAuth → Xbox Live → XSTS → Minecraft Services → Java Edition entitlement and player profile checks → launching an installed instance. Microsoft passwords are never requested by the application. MSAL caches are encrypted locally with Electron safeStorage on Windows; access tokens stay in the main process.
+Microsoft browser authorization and Xbox authentication reach Minecraft Services, which currently returns HTTP 403 / Invalid app registration. Minecraft API application access approval is pending. Complete account sign-in, token refresh, player skin retrieval and real game launches have not yet passed end-to-end validation.
 
-**Current status (2026-10-22):** Microsoft browser authorization and Xbox authentication have reached Minecraft Services, which returns HTTP 403 / Invalid app registration. Application access approval is pending. Full account sign-in, refresh and real game launches are not yet verified end to end. The repository includes the actual implementation and 28 automated tests; tests use isolated synthetic authentication responses.
+The repository contains the actual implementation, build configuration, interface assets and 28 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
 
-- [Authentication purpose, endpoints and data handling](AUTHENTICATION.md)
-- [Validation record and current limitations](VALIDATION.md)
-- Source: [electron/](electron/), [src/](src/), [shared/](shared/)
-- Build instructions are below. This is a source repository; generated executables and dependencies are excluded.
+- [Authentication purpose, service endpoints and local data handling](AUTHENTICATION.md)
+- [Validation record and known limitations](VALIDATION.md)
 
-## 运行
+## Features
 
-运行 `npm run package` 后，便携版生成于 `release/Autumn-Launcher-0.1.4-x64.exe`；该目录属于构建输出，不包含在源码仓库中。也可运行 `release/win-unpacked/Autumn Launcher.exe`；必须保留同目录内全部文件。
+- Scan standard local Minecraft directories and parse installed Vanilla, Fabric and NeoForge versions for Minecraft 1.18–1.21.x.
+- Create isolated game directories with per-instance names, icons, Java paths and memory settings.
+- Sign in from the avatar button through Microsoft's official browser-based device-code flow.
+- Verify Minecraft Java Edition entitlement and retrieve the player's UUID, name and skin.
+- Launch through XMCL with the selected Java runtime and instance directory.
+- Show the latest startup log, then keep the status at **Instance is Running.** or **Launch Failed.** Normal game exit restores **Ready to launch.**
+- Check dependencies and download missing resources with integrity verification.
+- Configure direct, system, HTTP or unauthenticated SOCKS5 networking for launcher requests.
 
-开发环境需要 Node.js 22.12 或更高版本：
+Feature implementation is separate from live validation; see the validation record for current acceptance limits.
 
-```powershell
-npm ci
-npm run dev
-```
+## Development
 
-生产构建与检查：
+Requirements: Windows x64, Node.js 22.12 or newer, npm and a Java runtime appropriate for the installed Minecraft version.
 
-```powershell
-npm run build
-npm test
-npm start
-npm run package
-```
+    npm ci
+    npm run dev
 
-首次使用 Electron 时可能需要下载官方运行时。若网络必须走代理，按 Electron 下载器的说明设置 `ELECTRON_GET_USE_PROXY` 与代理环境变量。
+Type checking, production build and tests:
 
-## 使用
+    npm run build
+    npm test
+    npm start
 
-1. 点击侧栏 `+`。启动器会扫描 `%APPDATA%\.minecraft` 等常见目录；也可添加包含 `versions`、`libraries`、`assets` 的标准游戏根目录。
-2. 选择经过基本完整性校验的已安装版本，输入名称后创建实例。默认生成新的独立目录，分别保存模组、配置和存档。不会把原游戏目录当作实例目录。
-3. 点击设置按钮，检测/选择适合该版本的 **Windows x64 Java**，配置内存。空白实例覆盖项会继承全局设置。
-4. 点击右上角头像进入微软官方登录流程；登录成功后显示 Java 正版玩家的皮肤头像和名称。
-5. 点击右下角启动。左下角显示最新启动日志，窗口就绪后固定为 `Instance is Running.`；失败后固定为 `Launch Failed.`。游戏正常退出后恢复 `Ready to launch.`。点击日志行可打开详细日志。
-6. 悬浮实例标题可显示编辑按钮。可以更名、更换图标、覆盖 Java/内存、打开目录、删除记录。删除记录有二次确认，始终保留游戏数据。
+Build a Windows x64 portable executable:
 
-## 微软登录配置
+    npm run package
 
-**此源码版本未内置已注册的 Microsoft 应用 Client ID。** 它是启动器开发者的应用编号，不是玩家账户、玩家 UUID、邮箱或密码。未配置应用编号时，账号窗口会明确提示，不能完成真实登录。
+The portable executable is generated under release/Autumn-Launcher-0.1.4-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository.
 
-在全局配置的「游戏目录与应用登录配置」中填写自己的应用 Client ID，或者在首次启动时通过 `MICROSOFT_CLIENT_ID` 环境变量提供。已有配置优先。
+The initial dependency installation may download Electron's official runtime. Configure the Electron downloader's supported proxy environment variables if your network requires a proxy.
 
-应用需允许个人 Microsoft 账户和公共客户端流。登录采用 MSAL 官方设备代码流程，请求 `XboxLive.signin`，然后通过 XMCL 完成 Xbox / Minecraft 令牌交换，再检查 Java 使用资格和玩家档案。Minecraft / Xbox API 是否允许此应用访问还取决于应用的实际注册和平台授权；仅有一个 UUID 形式的编号不代表登录已经通过验证。
+## Basic use
 
-用户只在系统浏览器的微软官方页面输入凭据。没有任何收集 Microsoft 密码的表单，也不需要客户端密码。MSAL 缓存和代理密码用 Electron `safeStorage` 在 Windows 上加密保存；令牌不交给 React，也不写入普通配置文件。退出登录会清除本地账号凭据。
+1. Select the sidebar plus button. Scan a standard Minecraft root or choose a folder containing versions, libraries and assets.
+2. Select an installed version that passes basic checks and create an instance. New instances use separate game directories for mods, settings and saves.
+3. Open settings and select a Windows x64 Java runtime suitable for that version. Configure memory globally or override it per instance.
+4. Select the avatar button to start Microsoft sign-in. Account credentials are entered on Microsoft's official website.
+5. Select Play. The startup status follows actual game output and XMCL's game-window-ready event. Select the status line to open detailed logs.
+6. Hover over the instance title to edit its settings. Removing an instance record requires confirmation and preserves game data.
 
-参考：[微软应用注册](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)、[设备代码流程](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code)、[XMCL 项目](https://github.com/Voxelum/x-minecraft-launcher)。
+## Application registration and Microsoft sign-in
 
-## 支持范围与数据行为
+This source build does not embed a Microsoft application Client ID. The ID identifies the launcher application and is not a player's email, password or Minecraft UUID. For developer setup, configure the ID in advanced settings or set MICROSOFT_CLIENT_ID before the first run. Existing saved settings take precedence.
 
-- 适配标准已安装目录中的 Minecraft 1.18–1.21.x，包括 Vanilla、Fabric、NeoForge。通过实际解析的加载器依赖和主类识别，不能识别的自定义版本会说明原因。
-- 版本扫描验证 JSON 继承、客户端、依赖和资源；启动前进一步进行校验。成功启动标记依据 XMCL 的游戏窗口就绪日志事件，未使用等待若干秒即成功的计时器。
-- 缺失的依赖和资源由 XMCL 解析下载清单，经启动器网络会话下载并校验。百分比来自当前批次已完成文件数，批次变化可重置。不可量化阶段显示不确定进度动画。
-- 自动修复只补齐缺失文件。已有文件损坏、客户端 JAR 缺失或加载器处理未完成时，提示使用原安装器修复，不覆盖已有资源。不提供完整游戏版本下载商店。
-- 代理配置影响启动器登录和资源下载，不代理 Java 游戏流量。HTTP 支持账号密码；SOCKS5 目前只支持无认证代理。
-- 默认配置在 `%APPDATA%\autumn-minecraft-launcher`。`config.json` 保存配置与实例记录；`account.bin` / `proxy.bin` 是加密凭据；`icons` 保存复制后的图标；`logs` 保存启动日志；`instances` 是默认实例数据位置。
-- 更改默认实例位置不移动现有实例；删除记录不删除目录。现有配置损坏时会停止并提示，避免静默覆盖。
-- 关闭启动器不会主动结束游戏，但会停止当前进程跟踪和新日志记录。重新打开不会接管之前的游戏进程。
+The application registration must allow personal Microsoft accounts and public-client flows. The launcher uses MSAL's device-code flow with XboxLive.signin, then XMCL for Xbox Live, XSTS and Minecraft token exchange. It checks Java Edition entitlement and the Minecraft profile before making game-launch credentials available.
 
-## 验证与限制
+Minecraft API access also requires approval for the application's Client ID. The developer submits the application for review; production users should not need to register individual applications. If Minecraft Services returns Invalid app registration, repeated player authorization does not resolve application access approval.
 
-详见 [VALIDATION.md](VALIDATION.md)。**微软账号完整授权、Vanilla/Fabric/NeoForge 的真实游戏启动尚未完成实测，不能据此视为已满足全部 MVP 验收。**
+- [Microsoft application registration](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
+- [Microsoft device-code flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code)
+- [Minecraft application access request](https://aka.ms/mce-reviewappid)
+- [Developer documentation on Minecraft API permission](https://minecraft-launcher-lib.readthedocs.io/en/stable/tutorial/microsoft_login.html#apply-for-permission)
 
-无广告、遥测、市场、离线假登录或模拟下载进度。便携版没有代码签名证书。
+The launcher has no Microsoft password entry form. MSAL cache and proxy passwords are encrypted locally with Electron safeStorage on Windows. Access tokens remain in the main process and are not sent to React or written into ordinary configuration. Logout clears stored account credentials. See AUTHENTICATION.md for details.
 
-## 依赖兼容修复
+## Data and scope
 
-依赖使用锁文件固定。XMCL 核心 2.16.2、安装器 6.3.6、用户模块 4.4.2，均为 MIT 许可；MSAL Node 7.1.0。
+Application settings and instance records are stored under the local user-data directory, normally %APPDATA%/autumn-minecraft-launcher. Configuration is in config.json; account.bin and proxy.bin contain encrypted credentials. Instances, icons and game logs are stored separately. User data and credentials are excluded from this repository.
 
-这些 XMCL 发行包存在三处发布元数据问题，已做范围很小的兼容处理：
+Changing the default instance location does not move existing instances. Removing a record does not delete its directory. Closing the launcher does not terminate an active game; reopening does not attach to an already running game process.
 
-- `overrides` 将 unzip 的 `workspace:^*` 依赖指向已发布的 `@xmcl/yauzl@2.10.0`。
-- `postinstall` 修复 `@xmcl/unzip@2.2.0` 指向未发布 TypeScript 源文件的入口，改为其已有 `dist` 文件。
-- 安装器引用未发布的 `@xmcl/core/utils` 子路径；兼容脚本恢复上游源码中相同的 `isNotNull` 函数。游戏解析、校验、认证和启动逻辑均使用 XMCL。
+Only missing dependencies and resources are downloaded. Existing corrupted files are not overwritten. Repair incomplete client JARs or unfinished loader installations with the original installer. The launcher does not provide a complete game-version installation catalog.
 
-后续升级 XMCL 时应重新检查这些修复是否仍需要。
+Forge, Quilt, OptiFine, nonstandard MultiMC metadata, unknown custom launch chains and unadapted versions are outside the current scope. Launcher proxy settings do not proxy the Java game's traffic. HTTP proxy authentication is supported; SOCKS5 authentication is not.
 
-### AADSTS70002 / Invalid URL
+There are no advertising, telemetry, marketplace or offline-authentication substitute features. Portable builds are not code-signed. Interface assets originate from the supplied Figma design; their inclusion does not grant independent rights to third-party artwork or trademarks. Autumn Launcher is not affiliated with or endorsed by Mojang or Microsoft.
 
-0.1.3 已修复将微软失败响应误当作授权成功响应的问题。若提示 AADSTS70002，请进入 Entra「应用注册 → Autumn Launcher → Authentication (Preview) / 身份验证」，将「Allow public client flows / 允许公共客户端流」设为 Yes 并保存；界面也可能显示「Enable the following mobile and desktop flows」。此配置必须在应用注册中修改，更新启动器本身无法绕过微软服务器的拒绝。
+## Dependency compatibility
 
-### Minecraft 登录 HTTP 403
+The lockfile pins dependencies. The project currently uses XMCL core 2.16.2, installer 6.3.6 and user 4.4.2, plus MSAL Node 7.1.0.
 
-浏览器的微软授权成功，仍可能在后续 Minecraft 登录接口被拒绝。新应用需另外申请 Minecraft API 访问资格；注册 Client ID 和打开公共客户端流并不等于已取得此资格。可通过 [Minecraft 应用访问申请](https://aka.ms/mce-reviewappid) 提交启动器的应用信息，参考 [minecraft-launcher-lib 的开发者文档](https://minecraft-launcher-lib.readthedocs.io/en/stable/tutorial/microsoft_login.html#apply-for-permission)。
+The install script applies three narrow compatibility fixes for the published XMCL packages:
 
-0.1.4 按实际失败的接口分别显示 Xbox 用户验证、设备验证、XSTS、Minecraft 登录、正版资格和玩家档案错误。仅在 Minecraft 登录接口返回 HTTP 403 且响应明确包含 `Invalid app registration` 时，才确定提示应用注册被拒绝；其他 403 保留原因未明确的说明。Xbox 的数字 XErr 会保留，原始服务响应、令牌和身份字段不会进入错误提示。应用审批由平台决定，此修复不代表已解除服务端 403。
+- Resolve the unzip package's workspace dependency to the published @xmcl/yauzl 2.10.0 package.
+- Correct @xmcl/unzip's entry point from its unpublished TypeScript source to its existing dist output.
+- Restore the upstream isNotNull export required by the installer's missing @xmcl/core/utils subpath.
+
+Review these workarounds when upgrading XMCL. Game parsing, authentication and launch logic continue to use XMCL.
+
+## Source layout
+
+- electron/: main-process services, authentication, storage, scanning and launch logic.
+- src/: React interface and styling.
+- shared/: IPC types and launch-state transitions.
+- tests/: automated regressions.
+- scripts/: development, compatibility and diagnostic tools.
+- public/assets/: interface assets.
