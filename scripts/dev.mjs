@@ -1,0 +1,10 @@
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createServer } from 'vite';
+const require = createRequire(import.meta.url);
+const compiler = spawn(process.execPath, [require.resolve('typescript/bin/tsc'), '-p', 'tsconfig.electron.json'], { stdio: 'inherit' });
+const code = await new Promise(resolve => compiler.on('exit', resolve));
+if (code !== 0) process.exit(Number(code) || 1);
+const server = await createServer(); await server.listen();
+const child = spawn(require('electron'), ['.'], { stdio: 'inherit', env: { ...process.env, ELECTRON_RUN_AS_NODE: '', AUTUMN_DEV_URL: 'http://127.0.0.1:5173' } });
+child.on('exit', async code => { await server.close(); process.exit(code || 0); });

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-electron/
+release/
+*.log
+
+# Local credentials and user data
+.env
+.env.*
+!.env.example
+/config.json
+/account.bin
+/proxy.bin
+/logs/
+/instances/
+*.pem
+*.key

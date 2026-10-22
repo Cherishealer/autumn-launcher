@@ -1,0 +1,59 @@
+{
+  "name": "autumn-minecraft-launcher",
+  "version": "0.1.4",
+  "private": true,
+  "description": "A minimal launcher for locally installed Minecraft Java Edition",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "postinstall": "node scripts/fix-xmcl-package.cjs",
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "build": "npm run typecheck && vite build && tsc -p tsconfig.electron.json",
+    "start": "electron .",
+    "test": "tsx --test tests/*.test.ts",
+    "package": "npm run build && electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "@azure/msal-node": "^7.1.0",
+    "@xmcl/core": "2.16.2",
+    "@xmcl/installer": "6.3.6",
+    "@xmcl/user": "4.4.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "electron": "45.0.0",
+    "electron-builder": "^26.0.12",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  },
+  "overrides": {
+    "@xmcl/unzip": {
+      "@xmcl/yauzl": "2.10.0"
+    }
+  },
+  "build": {
+    "appId": "local.autumn.minecraft.launcher",
+    "productName": "Autumn Launcher",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "Autumn-Launcher-${version}-x64.${ext}"
+    }
+  }
+}
