@@ -1,17 +1,17 @@
 # Validation record
 
-Last updated: 2026-10-22. Current version: **0.1.5**.
+Last updated: 2026-10-22. Current version: **0.1.6**.
 
 ## Passed checks
 
 - Frontend and Electron TypeScript checks and Vite production build.
-- 38 automated tests covering Microsoft OAuth response validation, trusted verification URLs, legacy verification_url compatibility, device-code callbacks, cancellation, concurrent attempts, actual MSAL request normalization, actual XMCL exchange handling, stage-specific errors and sensitive-response redaction.
+- 43 automated tests covering Microsoft OAuth response validation, trusted verification URLs, legacy verification_url compatibility, device-code callbacks, cancellation, concurrent attempts, actual MSAL request normalization, actual XMCL exchange handling, stage-specific errors and sensitive-response redaction.
 - Launch-state tests for latest startup output, stable running/failed status, rejection of stale events and normal/abnormal exits.
 - JVM argument, path-boundary, IPC input and detached-console EPIPE regressions.
 - Windows Electron backend checks with isolated fixtures: configuration persistence, encrypted credential round trip, absence of plaintext test credentials and compatibility with older encrypted files.
 - Synthetic Vanilla/Fabric/NeoForge inheritance parsing and classification; rejection of cycles and traversal; incomplete versions are never reported as runnable.
 - Actual local metadata scanning identified a basically complete Vanilla 1.19.2 installation and incomplete Fabric metadata. This does not establish a successful game launch.
-- Windows x64 portable packaging. The packaged app.asar contains version 0.1.4, dependency compatibility fixes and the production stage-specific authentication handler.
+- Windows x64 portable packaging has been checked for earlier builds; the current local artifact is recorded below. Generated binaries remain excluded from GitHub.
 
 Tests of authentication success and failure use synthetic responses and no real player credentials. They do not establish platform approval or live sign-in success.
 
@@ -27,7 +27,7 @@ Complete account login, silent refresh, entitlement/profile acceptance and real 
 
 - Actual Vanilla, Fabric and NeoForge client startup, running and exit.
 - Full missing-resource download/repair behavior and each proxy mode in real network environments.
-- Broader instance-icon, long-list, resizing and dialog interaction coverage.
+- Extended touch-input, long-list auto-scroll and mixed-monitor DPI coverage.
 
 No real NeoForge installation was found during local inspection; its metadata support was checked with synthetic fixtures only.
 
@@ -55,11 +55,11 @@ Missing client JARs, dependencies and resources can be repaired from existing ve
 
 ## Local portable artifact
 
-The generated 0.1.4 portable executable has SHA-256:
+The generated 0.1.6 portable executable has SHA-256:
 
-    10ca5829b1a26d3a880ce3d70e836b012a340aff7b032cc3efaee11bcb5e59df
+    9d8f8defa690fbb6cb4b9a419ae26d6057fdaf6c4d07414a17ed64162a375208
 
-Generated binaries are excluded from this source repository. This hash records the locally produced artifact and does not imply that a GitHub Release has been published.
+The packaged app.asar was inspected without starting the app: its package version is 0.1.6, its CSS matches the latest production build, and it includes the dropdown SVG and instance-ordering IPC. The final executable was not opened automatically; final manual testing is left to the maintainer. Generated binaries are excluded from this source repository. This hash records the locally produced artifact and does not imply that a GitHub Release has been published.
 
 ## 0.1.5: language, interaction and local version discovery
 
@@ -75,3 +75,14 @@ Generated binaries are excluded from this source repository. This hash records t
 The dialog close button now has the same rounded-square hover color as the main-window close control. Windows icon assets include seven ICO sizes derived from the bundled grass SVG. Automated window-drag coverage verifies OS-coordinate deltas and release/focus cleanup.
 
 The isolated Windows UI check confirmed Chinese/English settings, persisted English after reopening, direct title editing, 80 × 80 sidebar hit areas, bounded 56-pixel icon artwork, dialog close hover, and pointer-driven window movement. A quick drag changed the window from (640, 336) to (740, 376) in DIP coordinates. UI checks used fixture instances, the production renderer/preload and isolated settings; no real account login or game launch was simulated as a successful acceptance result.
+
+
+## 0.1.6: stable dragging and instance-list actions
+
+- Window movement now skips unchanged pointer positions and submits fixed starting dimensions with each changed position. This prevents repeated movement calls from accumulating size changes. Tests cover stationary holds, repeated drags, quick release and loss of focus. A native Electron-window fixture retained 1000 by 640 DIP dimensions while held stationary and after moving by 100 by 40 DIP; only one native bounds update occurred.
+- Dropdowns use an SVG chevron with a 12 px right inset and 36 px text reserve, including disabled fields. System high-contrast mode retains native arrows.
+- Main-window minimize/close hover areas remain circular. Modal close buttons use rounded squares. Modal headings are not selectable; inputs and copyable fields remain selectable.
+- The instance title hover region fits its contents, and clicking the name no longer keeps the pencil visible after the pointer leaves. Keyboard focus on the pencil itself remains visible.
+- A themed instance context menu groups Launch and Edit above a divider, with Remove below. Actions target the right-clicked instance, including an instance that is not selected. Running/launching instances disable these actions. Removal continues to require confirmation and preserves game data.
+- Holding an icon for 350 ms enables drag ordering, including scrolling near the list edges. Releasing inside the list saves a validated permutation of existing IDs. Escape, loss of focus, pointer cancellation or dropping outside cancels the gesture. Sorting suppresses the resulting click and preserves the selected instance.
+- All 43 Node tests passed. An isolated renderer component fixture checked menu targeting, grouping, edge placement, dismissal, modal selection rules, hover shapes, long-press sorting, click suppression, cancellation and order persistence through the actual Store. Its pointer events were synthetic and its native pointer-capture call was stubbed; its launch route was simulated, not a real game launch. The visible Windows fixture separately confirmed the context menu and editing a non-selected instance.

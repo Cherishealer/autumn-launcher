@@ -31,6 +31,7 @@ export interface Api {
   scan(): Promise<Snapshot>;
   addRoot(): Promise<Snapshot>;
   select(id: string): Promise<Snapshot>;
+  reorderInstances(ids: string[]): Promise<Snapshot>;
   saveInstance(input: InstanceInput): Promise<Snapshot>;
   deleteInstance(id: string): Promise<Snapshot>;
   chooseIcon(id: string): Promise<Snapshot>;

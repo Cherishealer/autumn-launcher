@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { Store } from './storage';
 import { WindowDrag } from './window-drag';
+import { orderInstances } from './instance-order';
 import { Auth } from './auth';
 import { Network } from './network';
 import { Launcher } from './launcher';
@@ -58,6 +59,10 @@ function registerIpc() {
       await scan(); return snapshot();
     },
     select: async id => { instance(idSchema.parse(id)); store.config.selectedId = id; await store.save(); return snapshot(); },
+    reorderInstances: async ids => {
+      store.config.instances = orderInstances(store.config.instances, ids);
+      await store.save(); notify(); return snapshot();
+    },
     saveInstance: async input => {
       const data = instanceSchema.parse(input);
       if (data.id) {

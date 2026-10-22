@@ -3,27 +3,54 @@ import assert from 'node:assert/strict';
 import { setTimeout as wait } from 'node:timers/promises';
 import { WindowDrag } from '../electron/window-drag';
 
-test('window dragging tracks OS DIP deltas and stops on release or loss of focus', async () => {
+function fixture() {
   let focused = true;
   let point = { x: 1500, y: 900 };
-  const moves: number[][] = [];
-  const window = { getPosition: () => [640, 336], setPosition: (x: number, y: number) => { moves.push([x, y]); }, focus: () => { focused = true; }, isDestroyed: () => false, isFocused: () => focused, isMaximized: () => false, isMinimized: () => false };
-  const drag = new WindowDrag(window, () => point);
+  let bounds = { x: 640, y: 336, width: 1280, height: 720 };
+  const moves: typeof bounds[] = [];
+  const window = { getBounds: () => ({ ...bounds }), setBounds: (next: typeof bounds) => { moves.push({ ...next }); bounds = { ...next }; }, focus: () => { focused = true; }, isDestroyed: () => false, isFocused: () => focused, isMaximized: () => false, isMinimized: () => false };
+  return { window, moves, bounds: () => bounds, point: (next: typeof point) => { point = next; }, blur: () => { focused = false; }, drag: new WindowDrag(window, () => point) };
+}
+
+test('window dragging tracks OS DIP deltas and stops on release or loss of focus', async () => {
+  const { drag, point, moves, blur } = fixture();
   try {
-    drag.start(); point = { x: 1600, y: 950 }; await wait(40);
-    assert.deepEqual(moves.at(-1), [740, 386]);
-    drag.stop(); const count = moves.length; point = { x: -200, y: 20 }; await wait(25);
+    drag.start(); point({ x: 1600, y: 950 }); await wait(50);
+    assert.deepEqual(moves.at(-1), { x: 740, y: 386, width: 1280, height: 720 });
+    drag.stop(); const count = moves.length; point({ x: -200, y: 20 }); await wait(30);
     assert.equal(moves.length, count);
-    drag.start(); focused = false; await wait(25); assert.equal(moves.length, count);
+    drag.start(); blur(); await wait(30); drag.stop(true); assert.equal(moves.length, count);
   } finally { drag.stop(); }
 });
 
-test('quick pointer release applies the final position even before the first timer tick', () => {
-  const moves: number[][] = [];
-  const window = { getPosition: () => [640, 336], setPosition: (x: number, y: number) => { moves.push([x, y]); }, focus: () => {}, isDestroyed: () => false, isFocused: () => true, isMaximized: () => false, isMinimized: () => false };
-  const drag = new WindowDrag(window, () => ({ x: 1240, y: 676 }));
+test('quick pointer release applies the final position before the first timer tick', () => {
+  const { drag, point, moves } = fixture(); point({ x: 1240, y: 676 });
   try {
     drag.start({ x: 1140, y: 636 }); drag.stop(true);
-    assert.deepEqual(moves, [[740, 376]]);
+    assert.deepEqual(moves, [{ x: 740, y: 376, width: 1280, height: 720 }]);
+  } finally { drag.stop(); }
+});
+
+test('holding a stationary pointer never calls the native window mutator', async () => {
+  const { drag, moves, bounds } = fixture();
+  try {
+    drag.start(); await wait(200); drag.stop(true);
+    assert.equal(moves.length, 0);
+    for (let index = 0; index < 500; index++) { drag.start(); drag.stop(true); }
+    assert.equal(moves.length, 0);
+    assert.deepEqual(bounds(), { x: 640, y: 336, width: 1280, height: 720 });
+  } finally { drag.stop(); }
+});
+
+test('repeated drags preserve both dimensions and skip repeated coordinates', async () => {
+  const { drag, point, moves, bounds } = fixture();
+  try {
+    drag.start(); point({ x: 1600, y: 950 }); await wait(100);
+    assert.equal(moves.length, 1); drag.stop(true); assert.equal(moves.length, 1);
+    for (let index = 0; index < 100; index++) {
+      drag.start(); point({ x: 1601 + index, y: 951 + index }); drag.stop(true);
+    }
+    assert.equal(bounds().width, 1280); assert.equal(bounds().height, 720);
+    assert.ok(moves.every(move => move.width === 1280 && move.height === 720));
   } finally { drag.stop(); }
 });

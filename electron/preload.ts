@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Api } from '../shared/types';
-const names = ['snapshot', 'scan', 'addRoot', 'select', 'saveInstance', 'deleteInstance', 'chooseIcon', 'openFolder', 'choosePath', 'detectJava', 'saveSettings', 'login', 'cancelLogin', 'logout', 'launch', 'openLogs', 'window'] as const;
+const names = ['snapshot', 'scan', 'addRoot', 'select', 'reorderInstances', 'saveInstance', 'deleteInstance', 'chooseIcon', 'openFolder', 'choosePath', 'detectJava', 'saveSettings', 'login', 'cancelLogin', 'logout', 'launch', 'openLogs', 'window'] as const;
 const api: Record<string, unknown> = {};
 for (const name of names) api[name] = async (...args: unknown[]) => {
   const result = await ipcRenderer.invoke(`launcher:${name}`, ...args);

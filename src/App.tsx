@@ -1,11 +1,13 @@
 import { LanguageProvider } from './i18n';
 import { useEffect, useRef, useState } from 'react';
-import type { Api, DeviceCode, Instance, Snapshot } from '../shared/types';
+import type { DeviceCode, Snapshot } from '../shared/types';
 import { initialState } from '../shared/launch-state';
 import { translate, systemLanguage } from '../shared/i18n';
 import { Modal } from './Modal';
 import { SettingsDialog } from './SettingsDialog';
 import { InstanceDialog } from './InstanceDialog';
+import { InstanceSidebar } from './InstanceSidebar';
+import { RemoveInstanceDialog } from './RemoveInstanceDialog';
 
 const asset = (name: string) => `./assets/${name}.svg`;
 export function App() {
@@ -14,13 +16,13 @@ export function App() {
   const language = data?.settings.language || systemLanguage(navigator.language);
   const t = (text: string) => translate(text, language);
   useEffect(() => { document.documentElement.lang = language; }, [language]);
-  const [modal, setModal] = useState<'create' | 'edit' | 'settings' | 'account' | 'error' | undefined>();
+  const [modal, setModal] = useState<'create' | 'edit' | 'settings' | 'account' | 'error' | 'remove' | undefined>();
   const [error, setError] = useState('');
   const [device, setDevice] = useState<DeviceCode>();
   const [loggingIn, setLoggingIn] = useState(false);
-  const [hover, setHover] = useState<{ item: Instance; top: number }>();
-  const [scroll, setScroll] = useState({ top: false, bottom: false });
-  const list = useRef<HTMLDivElement>(null);
+  const [editingId, setEditingId] = useState<string>();
+  const openEdit = (id: string) => { setEditingId(id); setModal('edit'); };
+  const openRemove = (id: string) => { setEditingId(id); setModal('remove'); };
   const dragPointer = useRef<number | undefined>(undefined);
   const stopWindowDrag = () => {
     if (dragPointer.current === undefined) return;
@@ -35,18 +37,17 @@ export function App() {
     void api?.window('drag-start', { x: event.clientX, y: event.clientY }).catch(stopWindowDrag);
   };
   const selected = data?.instances.find(i => i.id === data.selectedId) || data?.instances[0];
+  const modalInstance = editingId ? data?.instances.find(item => item.id === editingId) : selected;
   const version = data?.versions.find(v => v.key === selected?.versionKey);
   const state = selected ? data?.states[selected.id] || initialState() : initialState();
   const busy = ['checking', 'downloading', 'starting'].includes(state.phase);
   const run = async (task: () => Promise<unknown>) => { try { await task(); } catch (e: any) { setError(e.message); setModal('error'); } };
-  function checkScroll() { const el = list.current; if (el) setScroll({ top: el.scrollTop > 2, bottom: el.scrollTop + el.clientHeight < el.scrollHeight - 2 }); }
   useEffect(() => {
     if (!api) return;
     void run(async () => setData(await api.snapshot()));
     const off = api.onSnapshot(setData); const offCode = api.onDeviceCode(setDevice);
     return () => { off(); offCode(); };
   }, []);
-  useEffect(() => { checkScroll(); const resize = new ResizeObserver(checkScroll); if (list.current) resize.observe(list.current); return () => resize.disconnect(); }, [data?.instances.length]);
   if (!api) return <main className="browser-message"><h1>Autumn Launcher</h1><p>{t("请通过桌面程序打开启动器。")}</p><p>{t("在项目目录执行 npm run build，再执行 npm start。")}</p></main>;
   if (!data) return <main className="boot"><span className="spinner" />{t("正在读取本地启动器配置…")}</main>;
   const close = () => setModal(undefined);
@@ -54,22 +55,7 @@ export function App() {
     <div className="scene" aria-hidden="true" /><div className="shade" aria-hidden="true" />
     <div className="window-drag-surface" aria-hidden="true" />
     
-    <aside className="sidebar" aria-label={t("游戏实例")}>
-      <div ref={list} className={`instance-list ${scroll.top ? 'fade-top' : ''} ${scroll.bottom ? 'fade-bottom' : ''}`} onScroll={() => { checkScroll(); setHover(undefined); }}>
-        {data.instances.map(item => {
-          const v = data.versions.find(v => v.key === item.versionKey);
-          return <button key={item.id} className={`instance-icon ${selected?.id === item.id ? 'selected' : ''}`} aria-label={item.name} aria-pressed={selected?.id === item.id}
-            onClick={() => void run(async () => setData(await api.select(item.id)))}
-            onMouseEnter={e => setHover({ item, top: e.currentTarget.getBoundingClientRect().top + 9 })} onMouseLeave={() => setHover(undefined)}
-            onFocus={e => setHover({ item, top: e.currentTarget.getBoundingClientRect().top + 9 })} onBlur={() => setHover(undefined)}>
-            <img src={item.icon || v?.icon || asset('grass')} alt="" />
-          </button>;
-        })}
-      </div>
-      <div className="sidebar-actions"><div className="separator" /><button aria-label={t("创建实例")} title={t("创建实例")} className="add-button icon-button" onClick={() => setModal('create')}><img src={asset('plus')} alt="" /></button>
-        <button aria-label={t("全局配置")} title={t("全局配置")} className="settings-button icon-button" onClick={() => setModal('settings')}><img src={asset('settings')} alt="" /></button></div>
-    </aside>
-    {hover && <div className="instance-tooltip" style={{ top: Math.min(hover.top, window.innerHeight - 90) }} role="tooltip"><img src={asset('tooltip')} alt="" /><div><strong>{hover.item.name}</strong><small>{data.versions.find(v => v.key === hover.item.versionKey)?.minecraft || t("版本未找到")} {data.versions.find(v => v.key === hover.item.versionKey)?.loader}</small></div></div>}
+    <InstanceSidebar api={api} data={data} selectedId={selected?.id} update={setData} failed={e => { setError(e instanceof Error ? e.message : String(e)); setModal('error'); }} edit={openEdit} remove={openRemove} create={() => setModal('create')} settings={() => setModal('settings')} />
     <div className="top-controls">
       <button className="account-button" aria-label={data.account ? (t("账号：") + (data.account.name)) : t("登录微软账号")} title={data.account?.name || t("登录微软账号")} onClick={() => setModal('account')}>
         {data.account?.avatar ? <img src={data.account.avatar} alt={data.account.name} /> : <span className="person-icon" aria-hidden="true" />}
@@ -78,7 +64,7 @@ export function App() {
     </div>
     <section className={`instance-info ${selected ? '' : 'empty'}`} aria-label={t("当前实例")}>
       <span className="version-badge">{selected ? version?.minecraft || t("版本未找到") : 'Minecraft Java Edition'}</span>
-      <div className="instance-title"><h1 title={selected?.name}>{selected ? <button className="instance-name-button" onClick={() => setModal('edit')} aria-label={t("编辑实例") + ": " + selected.name}>{selected.name}</button> : t("创建你的第一个实例")}</h1>{selected && <button className="edit-button" aria-label={t("编辑实例")} onClick={() => setModal('edit')}><img src={asset('edit')} alt="" /></button>}</div>
+      <div className="instance-title"><h1 title={selected?.name}>{selected ? <button className="instance-name-button" onClick={() => selected && openEdit(selected.id)} aria-label={t("编辑实例") + ": " + selected.name}>{selected.name}</button> : t("创建你的第一个实例")}</h1>{selected && <button className="edit-button" aria-label={t("编辑实例")} onClick={() => selected && openEdit(selected.id)}><img src={asset('edit')} alt="" /></button>}</div>
       <p className="loader-name">{selected ? version ? `${version.loader}${version.loaderVersion ? ` ${version.loaderVersion}` : ''}` : t("请重新扫描游戏目录") : t("从本地已安装的游戏版本开始")}</p>
       {!selected && <button className="empty-create" onClick={() => setModal('create')}>{t("添加实例")}</button>}
       {selected && <button className={`launch-status ${state.phase}`} title={t(state.error || state.message)} aria-label={t("打开详细启动日志")} onClick={() => void run(() => api.openLogs(selected.id))}>
@@ -91,7 +77,8 @@ export function App() {
         : <img src={asset(state.phase === 'running' ? 'running' : 'play')} alt="" />}
     </button>
     {modal === 'settings' && <SettingsDialog api={api} data={data} saved={d => { setData(d); close(); }} close={close} />}
-    {(modal === 'create' || modal === 'edit') && <InstanceDialog api={api} data={data} instance={modal === 'edit' ? selected : undefined} saved={d => { setData(d); close(); }} update={setData} close={close} />}
+    {(modal === 'create' || modal === 'edit') && <InstanceDialog api={api} data={data} instance={modal === 'edit' ? modalInstance : undefined} saved={d => { setData(d); close(); }} update={setData} close={close} />}
+    {modal === 'remove' && modalInstance && <RemoveInstanceDialog api={api} instance={modalInstance} saved={d => { setData(d); close(); }} close={close} />}
     {modal === 'account' && <Modal title={data.account ? t("微软正版账号") : t("登录微软账号")} close={() => { if (loggingIn) void api.cancelLogin(); close(); }} footer={<>
       {data.account ? <button className="danger" onClick={() => void run(async () => { setData(await api.logout()); close(); })}>{t("退出账号")}</button> : <button className="primary" disabled={loggingIn || !data.settings.clientId} onClick={() => void run(async () => { setLoggingIn(true); try { setData(await api.login()); setDevice(undefined); close(); } finally { setLoggingIn(false); } })}>{loggingIn ? t("等待微软授权…") : t("在浏览器中登录")}</button>}
       {loggingIn && <button onClick={() => void api.cancelLogin()}>{t("取消登录")}</button>}<button onClick={close}>{t("关闭")}</button></>}>

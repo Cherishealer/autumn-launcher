@@ -2,6 +2,7 @@ import { useTranslator } from './i18n';
 import { useState } from 'react';
 import type { Api, Instance, InstanceInput, Snapshot } from '../shared/types';
 import { Modal } from './Modal';
+import { RemoveInstanceDialog } from './RemoveInstanceDialog';
 export function InstanceDialog({ api, data, instance, close, saved, update }: { api: Api; data: Snapshot; instance?: Instance; close: () => void; saved: (d: Snapshot) => void; update: (d: Snapshot) => void }) {
   const t = useTranslator();
   const [form, setForm] = useState<InstanceInput>({ id: instance?.id, name: instance?.name || '', versionKey: instance?.versionKey || (data.versions.find(v => v.runnable) || data.versions.find(v => v.repairable))?.key || '', gameDir: instance?.gameDir, javaPath: instance?.javaPath, minMemory: instance?.minMemory, maxMemory: instance?.maxMemory });
@@ -10,7 +11,7 @@ export function InstanceDialog({ api, data, instance, close, saved, update }: { 
   const change = <K extends keyof InstanceInput>(key: K, value: InstanceInput[K]) => setForm(f => ({ ...f, [key]: value }));
   const task = async (fn: () => Promise<void>) => { setError(''); setWorking(true); try { await fn(); } catch (e: any) { setError(e.message); } finally { setWorking(false); } };
   const browse = () => task(async () => { const parent = await api.choosePath('directory'); if (parent) change('gameDir', parent + '\\' + (form.name.replace(/[<>:"/\\|?*]/g, '').trim() || 'Minecraft') + '-' + Date.now()); });
-  if (confirm && instance) return <Modal title={t("删除实例记录")} close={() => setConfirm(false)} footer={<><button onClick={() => setConfirm(false)}>{t("取消")}</button><button className="primary danger" disabled={working} onClick={() => void task(async () => saved(await api.deleteInstance(instance.id)))}>{t("删除记录")}</button></>}><p>{t("确定删除「")}{instance.name}{t("」的启动器记录？")}</p><p>{t("存档、模组、配置和游戏目录会保留。")}</p><p className="path-text">{instance.gameDir}</p>{error && <p className="inline-error">{t(error)}</p>}</Modal>;
+  if (confirm && instance) return <RemoveInstanceDialog api={api} instance={instance} close={() => setConfirm(false)} saved={saved} />;
   return <Modal title={instance ? t("编辑实例") : t("创建实例")} close={close} footer={<>{instance && <button className="danger delete-instance" onClick={() => setConfirm(true)}>{t("删除记录")}</button>}<button onClick={close}>{t("取消")}</button><button className="primary" disabled={working || !form.name.trim() || !instance && !version?.runnable && !version?.repairable} onClick={() => void task(async () => saved(await api.saveInstance(form)))}>{working ? t("处理中…") : instance ? t("保存") : t("创建")}</button></>}>
     <div className="instance-form">
       <div className="form-row"><label htmlFor="instance-name">{t("实例名称")}</label><input id="instance-name" autoFocus maxLength={80} value={form.name} placeholder={t("给这段冒险取个名字")} onChange={e => change('name', e.target.value)} /></div>

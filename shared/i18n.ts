@@ -5,6 +5,13 @@ export function systemLanguage(locale: string): Language {
 }
 
 export const english: Record<string, string> = {
+  "启动": "Launch",
+  "编辑": "Edit",
+  "删除": "Remove",
+  "实例操作": "Instance actions",
+  "正在调整实例顺序": "Reordering instances",
+  "实例列表已变化，请重新排序": "The instance list has changed. Please reorder it again",
+
   "资源索引哈希无效": "The asset index hash is invalid",
   "选择已安装的游戏版本": "Select an installed game version",
   " · 启动时补齐文件": " · Downloads missing files on launch",

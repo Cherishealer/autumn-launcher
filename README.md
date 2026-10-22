@@ -10,11 +10,11 @@ All third-party images and trademarks belong to their respective rights holders.
 
 ## Project status
 
-Version: **0.1.5**, under development.
+Version: **0.1.6**, under development.
 
 Microsoft browser authorization and Xbox authentication reach Minecraft Services, which currently returns HTTP 403 / Invalid app registration. Minecraft API application access approval is pending. Complete account sign-in, token refresh, player skin retrieval and real game launches have not yet passed end-to-end validation.
 
-The repository contains the actual implementation, build configuration, interface assets and 38 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
+The repository contains the actual implementation, build configuration, interface assets and 43 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
 
 - [Authentication purpose, service endpoints and local data handling](AUTHENTICATION.md)
 - [Validation record and known limitations](VALIDATION.md)
@@ -22,8 +22,10 @@ The repository contains the actual implementation, build configuration, interfac
 ## Features
 
 - Scan standard local Minecraft directories and parse installed Vanilla, Fabric, Forge and NeoForge versions using Java 17 or newer, including modern snapshots with standard metadata.
+- Settings dropdown arrows use a consistent inset from the field edge.
 - Choose Simplified Chinese or English in settings. The first run defaults to Chinese for Chinese system languages and English otherwise; saved choices take precedence.
 - Create isolated game directories with per-instance names, icons, Java paths and memory settings.
+- Right-click an instance for Launch, Edit and Remove actions. Hold its icon for 350 ms, then drag to reorder; the order is saved automatically.
 - Sign in from the avatar button through Microsoft's official browser-based device-code flow.
 - Verify Minecraft Java Edition entitlement and retrieve the player's UUID, name and skin.
 - Launch through XMCL with the selected Java runtime and instance directory.
@@ -50,7 +52,7 @@ Build a Windows x64 portable executable:
 
     npm run package
 
-The portable executable is generated under release/Autumn-Launcher-0.1.5-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository. The application/window icon is generated from the bundled grass-block SVG; run npm run generate:icon after changing that SVG.
+The portable executable is generated under release/Autumn-Launcher-0.1.6-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository. The application/window icon is generated from the bundled grass-block SVG; run npm run generate:icon after changing that SVG.
 
 The initial dependency installation may download Electron's official runtime. Configure the Electron downloader's supported proxy environment variables if your network requires a proxy.
 
@@ -62,7 +64,8 @@ The initial dependency installation may download Electron's official runtime. Co
 4. In settings, choose the interface language if desired.
 5. Select the avatar button to start Microsoft sign-in. Account credentials are entered on Microsoft's official website.
 6. Select Play. The startup status follows actual game output and XMCL's game-window-ready event. Select the status line to open detailed logs.
-7. Click the instance title or its edit button to edit its settings. Removing an instance record requires confirmation and preserves game data.
+7. Click the instance title or its edit button to edit its settings. Right-click a sidebar icon for Launch and Edit, followed by a divider and Remove. Removing an instance record requires confirmation and preserves game data.
+8. Hold a sidebar icon for 350 ms, then drag it to change its position. Release inside the list to save the order; press Escape or release outside the list to cancel. The list scrolls when the dragged icon reaches its top or bottom edge.
 
 ## Application registration and Microsoft sign-in
 
