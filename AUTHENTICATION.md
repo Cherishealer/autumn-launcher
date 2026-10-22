@@ -2,7 +2,7 @@
 
 ## Application and purpose
 
-Autumn Launcher is an independently developed Windows desktop launcher for Minecraft: Java Edition. It manages locally installed Vanilla, Fabric and NeoForge instances with separate game directories. These launch paths are implemented, but real game launches have not yet completed end-to-end validation. The project is not affiliated with or endorsed by Mojang or Microsoft.
+Autumn Launcher is an independently developed Windows desktop launcher for Minecraft: Java Edition. It is a personal practice project, strictly non-commercial, and will not charge fees in any form. It manages locally installed Vanilla, Fabric, Forge and NeoForge instances with separate game directories. These launch paths are implemented, but real game launches have not yet completed end-to-end validation. The project is not affiliated with or endorsed by Mojang or Microsoft.
 
 Minecraft service access is required to authenticate players who have legitimate Java Edition access, verify their game entitlement and obtain their Minecraft profile and skin for the launcher interface. The launcher does not offer offline identities as a substitute for authentication or distribute a bundled Minecraft client.
 
@@ -41,7 +41,7 @@ The Client ID identifies the launcher application. A production distribution sho
 
 As of 2026-10-22, the developer's sign-in attempt reaches Minecraft Services and receives HTTP 403 with Invalid app registration. Minecraft API application access approval is pending. This repository does not claim that the application has been approved or that complete account sign-in and game launch have passed live validation.
 
-The 28 automated tests include the actual installed MSAL and XMCL implementations with synthetic HTTP responses to cover device-code handling, cancellation, Xbox/Minecraft exchange failures, stage-specific diagnostics and sensitive-response redaction. These tests are separate from live account approval and game-launch acceptance.
+The 38 automated tests include the actual installed MSAL and XMCL implementations with synthetic HTTP responses to cover device-code handling, cancellation, Xbox/Minecraft exchange failures, stage-specific diagnostics and sensitive-response redaction. These tests are separate from live account approval and game-launch acceptance.
 
 ## Code references
 

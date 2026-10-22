@@ -7,7 +7,7 @@ import { launch, createMinecraftProcessWatcher } from '@xmcl/core';
 import { initialState, beginLaunch, latestLog, transition } from '../shared/launch-state';
 import type { LaunchState, InstalledVersion } from '../shared/types';
 import { parseJvmArgs } from './validation';
-import { resolveVersion, diagnoseVersion, repairFiles, issueSummary } from './versions';
+import { resolveVersion, diagnoseVersion, repairFiles, issueSummary, useHashedAssetIndex } from './versions';
 import { inspectJava, detectJava } from './java';
 import { downloadMissing } from './download';
 import type { Store } from './storage';
@@ -67,7 +67,7 @@ export class Launcher {
       const version = await resolveVersion(installed.root, installed.id);
       let issue = await diagnoseVersion(version, true);
       for (let stage = 0; issue && stage < 3; stage++) {
-        if (issue.jar || issue.forge || issue.profile) throw new Error(issueSummary(issue).join('；'));
+        if (issue.forge || issue.profile) throw new Error(issueSummary(issue).join('；'));
         const files = repairFiles(version, issue);
         if (!files.length) break;
         move('downloading');
@@ -84,6 +84,7 @@ export class Launcher {
       move('starting'); log('Starting Minecraft Java Edition...');
       const process = await launch({
         version, javaPath: java.path, gamePath: instance.gameDir, resourcePath: installed.root,
+        useHashAssetsIndex: await useHashedAssetIndex(version),
         gameProfile: credentials.profile, accessToken: credentials.accessToken,
         launcherName: 'Autumn Launcher', launcherBrand: 'Autumn', minMemory, maxMemory,
         ...(extraJVMArgs.length ? { extraJVMArgs } : {}), nativeRoot: path.join(instance.gameDir, '.autumn-natives'),

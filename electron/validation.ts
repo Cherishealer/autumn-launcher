@@ -10,6 +10,7 @@ export const instanceSchema = z.object({
   minMemory: memory.optional(), maxMemory: memory.optional()
 }).strict().refine(v => v.minMemory === undefined || v.maxMemory === undefined || v.minMemory <= v.maxMemory, '最小内存不能大于最大内存');
 export const settingsSchema = z.object({
+  language: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
   javaPath: z.union([absolutePath, z.literal('')]), instancesDir: absolutePath,
   minMemory: memory, maxMemory: memory, jvmArgs: z.string().max(8000),
   clientId: z.union([z.string().uuid(), z.literal('')]), roots: z.array(absolutePath).max(30),

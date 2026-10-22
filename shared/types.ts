@@ -1,10 +1,11 @@
+export type Language = 'zh-CN' | 'en-US';
 export type Phase = 'ready' | 'checking' | 'downloading' | 'starting' | 'running' | 'failed';
 export interface LaunchState {
   phase: Phase; message: string; progress?: number; error?: string; logFile?: string; attempt: string;
 }
 export interface InstalledVersion {
   key: string; root: string; id: string; minecraft: string;
-  loader: 'Vanilla' | 'Fabric' | 'NeoForge' | 'Unsupported'; loaderVersion?: string;
+  loader: 'Vanilla' | 'Fabric' | 'Forge' | 'NeoForge' | 'Unsupported'; loaderVersion?: string;
   javaMajor: number; runnable: boolean; repairable: boolean; issues: string[]; icon?: string;
 }
 export interface Instance {
@@ -12,6 +13,7 @@ export interface Instance {
   javaPath?: string; minMemory?: number; maxMemory?: number;
 }
 export interface Settings {
+  language: Language;
   javaPath: string; instancesDir: string; minMemory: number; maxMemory: number;
   jvmArgs: string; clientId: string; roots: string[];
   proxyMode: 'system' | 'direct' | 'http' | 'socks5'; proxyAddress: string; proxyUsername: string;
@@ -41,7 +43,7 @@ export interface Api {
   logout(): Promise<Snapshot>;
   launch(id: string): Promise<void>;
   openLogs(id: string): Promise<void>;
-  window(action: 'minimize' | 'close'): Promise<void>;
+  window(action: 'minimize' | 'close' | 'drag-start' | 'drag-stop', point?: { x: number; y: number }): Promise<void>;
   onSnapshot(fn: (data: Snapshot) => void): () => void;
   onDeviceCode(fn: (data: DeviceCode | undefined) => void): () => void;
 }

@@ -1,6 +1,6 @@
 {
   "name": "autumn-minecraft-launcher",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "A minimal launcher for locally installed Minecraft Java Edition",
   "main": "dist-electron/electron/main.js",
@@ -11,7 +11,8 @@
     "build": "npm run typecheck && vite build && tsc -p tsconfig.electron.json",
     "start": "electron .",
     "test": "tsx --test tests/*.test.ts",
-    "package": "npm run build && electron-builder --win portable --x64"
+    "package": "npm run build && electron-builder --win portable --x64",
+    "generate:icon": "electron scripts/generate-icon.cjs"
   },
   "dependencies": {
     "@azure/msal-node": "^7.1.0",
@@ -53,7 +54,8 @@
       "target": [
         "portable"
       ],
-      "artifactName": "Autumn-Launcher-${version}-x64.${ext}"
+      "artifactName": "Autumn-Launcher-${version}-x64.${ext}",
+      "icon": "public/assets/app-icon.ico"
     }
   }
 }

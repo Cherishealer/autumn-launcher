@@ -2,20 +2,27 @@
 
 A minimal Windows x64 desktop launcher for locally installed Minecraft: Java Edition instances, built with Electron, React, TypeScript, MSAL Node and XMCL.
 
+## Personal practice project and image notice
+
+This is a personal practice project for learning purposes only. It is strictly non-commercial. No fees will be charged in any form.
+
+All third-party images and trademarks belong to their respective rights holders. If any image used by this launcher infringes your rights, please [contact the maintainer by opening an issue](https://github.com/Cherishealer/autumn-launcher/issues). We sincerely apologize for any infringement and will remove the identified image assets from the launcher within 24 hours of receiving your notification.
+
 ## Project status
 
-Version: **0.1.4**, under development.
+Version: **0.1.5**, under development.
 
 Microsoft browser authorization and Xbox authentication reach Minecraft Services, which currently returns HTTP 403 / Invalid app registration. Minecraft API application access approval is pending. Complete account sign-in, token refresh, player skin retrieval and real game launches have not yet passed end-to-end validation.
 
-The repository contains the actual implementation, build configuration, interface assets and 28 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
+The repository contains the actual implementation, build configuration, interface assets and 38 automated tests. Authentication tests use the installed MSAL and XMCL implementations with isolated synthetic HTTP responses; they do not establish live application approval.
 
 - [Authentication purpose, service endpoints and local data handling](AUTHENTICATION.md)
 - [Validation record and known limitations](VALIDATION.md)
 
 ## Features
 
-- Scan standard local Minecraft directories and parse installed Vanilla, Fabric and NeoForge versions for Minecraft 1.18–1.21.x.
+- Scan standard local Minecraft directories and parse installed Vanilla, Fabric, Forge and NeoForge versions using Java 17 or newer, including modern snapshots with standard metadata.
+- Choose Simplified Chinese or English in settings. The first run defaults to Chinese for Chinese system languages and English otherwise; saved choices take precedence.
 - Create isolated game directories with per-instance names, icons, Java paths and memory settings.
 - Sign in from the avatar button through Microsoft's official browser-based device-code flow.
 - Verify Minecraft Java Edition entitlement and retrieve the player's UUID, name and skin.
@@ -43,7 +50,7 @@ Build a Windows x64 portable executable:
 
     npm run package
 
-The portable executable is generated under release/Autumn-Launcher-0.1.4-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository.
+The portable executable is generated under release/Autumn-Launcher-0.1.5-x64.exe. The unpacked application is generated under release/win-unpacked/ and requires all adjacent runtime files. Generated executables, build output and node_modules are excluded from this source repository. The application/window icon is generated from the bundled grass-block SVG; run npm run generate:icon after changing that SVG.
 
 The initial dependency installation may download Electron's official runtime. Configure the Electron downloader's supported proxy environment variables if your network requires a proxy.
 
@@ -52,9 +59,10 @@ The initial dependency installation may download Electron's official runtime. Co
 1. Select the sidebar plus button. Scan a standard Minecraft root or choose a folder containing versions, libraries and assets.
 2. Select an installed version that passes basic checks and create an instance. New instances use separate game directories for mods, settings and saves.
 3. Open settings and select a Windows x64 Java runtime suitable for that version. Configure memory globally or override it per instance.
-4. Select the avatar button to start Microsoft sign-in. Account credentials are entered on Microsoft's official website.
-5. Select Play. The startup status follows actual game output and XMCL's game-window-ready event. Select the status line to open detailed logs.
-6. Hover over the instance title to edit its settings. Removing an instance record requires confirmation and preserves game data.
+4. In settings, choose the interface language if desired.
+5. Select the avatar button to start Microsoft sign-in. Account credentials are entered on Microsoft's official website.
+6. Select Play. The startup status follows actual game output and XMCL's game-window-ready event. Select the status line to open detailed logs.
+7. Click the instance title or its edit button to edit its settings. Removing an instance record requires confirmation and preserves game data.
 
 ## Application registration and Microsoft sign-in
 
@@ -77,9 +85,9 @@ Application settings and instance records are stored under the local user-data d
 
 Changing the default instance location does not move existing instances. Removing a record does not delete its directory. Closing the launcher does not terminate an active game; reopening does not attach to an already running game process.
 
-Only missing dependencies and resources are downloaded. Existing corrupted files are not overwritten. Repair incomplete client JARs or unfinished loader installations with the original installer. The launcher does not provide a complete game-version installation catalog.
+Installed metadata entries are classified as ready, repairable or unavailable. Repairable entries can be selected; their first launch verifies and downloads missing client JARs, dependencies and assets using the existing metadata and checksum checks. Downloads may be large. Existing corrupted files are not overwritten. Asset indexes with reused IDs are stored under their expected hashes when needed, preserving the conventional index used by other versions. Unfinished loader processing and existing corrupt files still require the original installer. The launcher does not provide a full version installation catalog.
 
-Forge, Quilt, OptiFine, nonstandard MultiMC metadata, unknown custom launch chains and unadapted versions are outside the current scope. Launcher proxy settings do not proxy the Java game's traffic. HTTP proxy authentication is supported; SOCKS5 authentication is not.
+Quilt, OptiFine, nonstandard MultiMC metadata, unknown custom launch chains and older Java launch chains are outside the current scope. Launcher proxy settings do not proxy the Java game's traffic. HTTP proxy authentication is supported; SOCKS5 authentication is not.
 
 There are no advertising, telemetry, marketplace or offline-authentication substitute features. Portable builds are not code-signed. Interface assets originate from the supplied Figma design; their inclusion does not grant independent rights to third-party artwork or trademarks. Autumn Launcher is not affiliated with or endorsed by Mojang or Microsoft.
 

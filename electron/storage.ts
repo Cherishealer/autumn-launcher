@@ -3,15 +3,16 @@ import path from 'node:path';
 import { safeStorage } from 'electron';
 import type { Instance, Settings } from '../shared/types';
 import { instanceSchema, settingsSchema } from './validation';
+import { systemLanguage } from '../shared/i18n';
 
 interface Config { settings: Settings; instances: Instance[]; selectedId?: string }
 export class Store {
   config!: Config;
   private queue = Promise.resolve();
-  constructor(readonly dir: string) {}
+  constructor(readonly dir: string, private systemLocale = Intl.DateTimeFormat().resolvedOptions().locale) {}
   async init() {
     await fs.mkdir(this.dir, { recursive: true });
-    const defaults: Settings = { javaPath: '', instancesDir: path.join(this.dir, 'instances'), minMemory: 1024, maxMemory: 4096, jvmArgs: '', clientId: process.env.MICROSOFT_CLIENT_ID || '', roots: [], proxyMode: 'system', proxyAddress: '', proxyUsername: '' };
+    const defaults: Settings = { language: systemLanguage(this.systemLocale), javaPath: '', instancesDir: path.join(this.dir, 'instances'), minMemory: 1024, maxMemory: 4096, jvmArgs: '', clientId: process.env.MICROSOFT_CLIENT_ID || '', roots: [], proxyMode: 'system', proxyAddress: '', proxyUsername: '' };
     try {
       const data = JSON.parse(await fs.readFile(path.join(this.dir, 'config.json'), 'utf8'));
       const settings = settingsSchema.parse({ ...defaults, ...data.settings });
